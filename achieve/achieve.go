@@ -3,8 +3,8 @@ package achieve
 import (
 	"context"
 	"errors"
-	gorm_generics "gorm-generics"
 
+	"github.com/olongfen/gorm-generics"
 	"gorm.io/gorm"
 	"gorm.io/gorm/clause"
 )
