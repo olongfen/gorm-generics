@@ -42,6 +42,7 @@ type BasicRepo[T any] interface {
 type Database interface {
 	DB(ctx context.Context) *gorm.DB
 	Close() error
+	TranslateGormError(ctx context.Context, db *gorm.DB) error
 	ExecTx(ctx context.Context, fc func(context.Context) error) error
 }
 

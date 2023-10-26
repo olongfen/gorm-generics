@@ -23,16 +23,13 @@ const (
 )
 
 // DBConnect init database connect
-func DBConnect(driver DriverName, dsn string, opts ...Option) (*gorm.DB, error) {
+func DBConnect(driver DriverName, dsn string, option options) (*gorm.DB, error) {
 	var (
 		gormConfig = &gorm.Config{}
-		option     = options{}
 		db         *gorm.DB
 		err        error
 	)
-	for _, o := range opts {
-		o.apply(&option)
-	}
+
 	if option.logger != nil {
 		gormConfig.Logger = option.logger
 	}

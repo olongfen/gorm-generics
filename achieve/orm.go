@@ -2,6 +2,7 @@ package achieve
 
 import (
 	"context"
+	gorm_generics "github.com/olongfen/gorm-generics"
 	"time"
 
 	"go.opentelemetry.io/otel"
@@ -21,17 +22,31 @@ const (
 	CallBackAfterName = "opentracing:after"
 )
 
-type DataBase struct {
-	db *gorm.DB
+type DB struct {
+	db           *gorm.DB
+	translateErr func(ctx context.Context, db *gorm.DB) error
+}
+
+func (d *DB) TranslateGormError(ctx context.Context, db *gorm.DB) error {
+	if d.translateErr != nil {
+		return d.translateErr(ctx, db)
+	}
+	return db.Error
 }
 
 // NewDataBase new database
-func NewDataBase(driver DriverName, dsn string, opts ...Option) (*DataBase, error) {
-	db, err := DBConnect(driver, dsn, opts...)
+func NewDataBase(driver DriverName, dsn string, opts ...Option) (gorm_generics.Database, error) {
+	var (
+		option = options{}
+	)
+	for _, o := range opts {
+		o.apply(&option)
+	}
+	db, err := DBConnect(driver, dsn, option)
 	if err != nil {
 		return nil, err
 	}
-	database := &DataBase{db}
+	database := &DB{db, option.translateError}
 	return database, nil
 }
 
@@ -39,7 +54,7 @@ func NewDataBase(driver DriverName, dsn string, opts ...Option) (*DataBase, erro
 type contextTxKey struct{}
 
 // ExecTx 执行事务
-func (d *DataBase) ExecTx(ctx context.Context, fc func(context.Context) error) error {
+func (d *DB) ExecTx(ctx context.Context, fc func(context.Context) error) error {
 	return d.db.WithContext(ctx).Transaction(func(tx *gorm.DB) error {
 		ctx = context.WithValue(ctx, contextTxKey{}, tx)
 		return fc(ctx)
@@ -47,7 +62,7 @@ func (d *DataBase) ExecTx(ctx context.Context, fc func(context.Context) error) e
 }
 
 // DB 获取db
-func (d *DataBase) DB(ctx context.Context) *gorm.DB {
+func (d *DB) DB(ctx context.Context) *gorm.DB {
 	tx, ok := ctx.Value(contextTxKey{}).(*gorm.DB)
 	if ok {
 		return tx
@@ -56,7 +71,7 @@ func (d *DataBase) DB(ctx context.Context) *gorm.DB {
 }
 
 // Close 关闭db连接
-func (d *DataBase) Close() error {
+func (d *DB) Close() error {
 	sqlDB, err := d.db.DB()
 	if err != nil {
 		return err

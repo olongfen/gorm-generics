@@ -14,14 +14,6 @@ type basicRepo[T any] struct {
 	database gorm_generics.Database
 }
 
-var TranslateError func(ctx context.Context, db *gorm.DB) error
-
-func init() {
-	TranslateError = func(ctx context.Context, db *gorm.DB) error {
-		return nil
-	}
-}
-
 // NewBasicRepository 新建基础存储库
 func NewBasicRepository[T any](database gorm_generics.Database) gorm_generics.BasicRepo[T] {
 	return &basicRepo[T]{database}
@@ -42,7 +34,7 @@ func (b *basicRepo[T]) Database() gorm_generics.Database {
 func (b *basicRepo[T]) Create(ctx context.Context, ent *T) error {
 	db := b.database.DB(ctx).Create(ent)
 	if err := db.Error; err != nil {
-		return TranslateError(ctx, db)
+		return b.database.TranslateGormError(ctx, db)
 	}
 	return nil
 }
@@ -51,7 +43,7 @@ func (b *basicRepo[T]) Create(ctx context.Context, ent *T) error {
 func (b *basicRepo[T]) Creates(ctx context.Context, ent []*T) error {
 	db := b.database.DB(ctx).Create(ent)
 	if err := db.Error; err != nil {
-		return TranslateError(ctx, db)
+		return b.database.TranslateGormError(ctx, db)
 	}
 	return nil
 }
@@ -81,7 +73,7 @@ func (b *basicRepo[T]) Find(ctx context.Context, limit *gorm_generics.Limit, con
 	// 如果需要全部数据
 	if limit.Count {
 		if err := db.Count(&count).Error; err != nil {
-			err = TranslateError(ctx, db)
+			err = b.database.TranslateGormError(ctx, db)
 			return nil, 0, err
 		}
 	}
@@ -102,7 +94,7 @@ func (b *basicRepo[T]) Find(ctx context.Context, limit *gorm_generics.Limit, con
 	}
 
 	if err := db.Find(&data).Error; err != nil {
-		err = TranslateError(ctx, db)
+		err = b.database.TranslateGormError(ctx, db)
 		return nil, 0, err
 	}
 	return data, count, nil
@@ -115,7 +107,7 @@ func (b *basicRepo[T]) FindOne(ctx context.Context, id uint) (*T, error) {
 	)
 	db := b.database.DB(ctx).Model(b.Model()).Where("id = ?", id).First(&data)
 	if err := db.Error; err != nil {
-		err = TranslateError(ctx, db)
+		err = b.database.TranslateGormError(ctx, db)
 		return nil, err
 	}
 	return data, nil
@@ -129,7 +121,7 @@ func (b *basicRepo[T]) FindOneBy(ctx context.Context, conds []clause.Expression)
 	db := b.database.DB(ctx).Model(b.Model())
 	db = processExpression(db, conds)
 	if err := db.First(&data).Error; err != nil {
-		err = TranslateError(ctx, db)
+		err = b.database.TranslateGormError(ctx, db)
 		return nil, err
 	}
 	return data, nil
@@ -141,7 +133,7 @@ func (b *basicRepo[T]) Count(ctx context.Context, conds []clause.Expression) (co
 	db = processExpression(db, conds)
 	// 如果需要全部数据
 	if err = db.Count(&count).Error; err != nil {
-		err = TranslateError(ctx, db)
+		err = b.database.TranslateGormError(ctx, db)
 		return
 	}
 	return
@@ -154,7 +146,7 @@ func (b *basicRepo[T]) DeleteOne(ctx context.Context, id uint) error {
 	)
 	db := b.database.DB(ctx).Where("id = ?", id).Delete(&model)
 	if err := db.Error; err != nil {
-		return TranslateError(ctx, db)
+		return b.database.TranslateGormError(ctx, db)
 	}
 	return nil
 }
@@ -171,7 +163,7 @@ func (b *basicRepo[T]) DeleteBy(ctx context.Context, conds []clause.Expression) 
 	db = processExpression(db, conds)
 	db = db.Delete(&model)
 	if err := db.Error; err != nil {
-		return TranslateError(ctx, db)
+		return b.database.TranslateGormError(ctx, db)
 	}
 	return nil
 }
@@ -180,7 +172,7 @@ func (b *basicRepo[T]) DeleteBy(ctx context.Context, conds []clause.Expression) 
 func (b *basicRepo[T]) Update(ctx context.Context, id uint, ent *T) error {
 	db := b.database.DB(ctx).Model(b.Model()).Where("id = ?", id).Session(&gorm.Session{FullSaveAssociations: true}).Updates(ent)
 	if err := db.Error; err != nil {
-		err = TranslateError(ctx, db)
+		err = b.database.TranslateGormError(ctx, db)
 		return err
 	}
 	return nil
@@ -190,7 +182,7 @@ func (b *basicRepo[T]) Update(ctx context.Context, id uint, ent *T) error {
 func (b *basicRepo[T]) UpdateColumns(ctx context.Context, id uint, data any) error {
 	db := b.database.DB(ctx).Model(b.Model()).Where("id = ?", id).Save(data)
 	if err := db.Error; err != nil {
-		err = TranslateError(ctx, db)
+		err = b.database.TranslateGormError(ctx, db)
 		return err
 	}
 	return nil
@@ -205,7 +197,7 @@ func (b *basicRepo[T]) UpdateColumnsBy(ctx context.Context, conds []clause.Expre
 	db = processExpression(db, conds)
 	db = db.Updates(data)
 	if err := db.Error; err != nil {
-		err = TranslateError(ctx, db)
+		err = b.database.TranslateGormError(ctx, db)
 		return err
 	}
 	return nil

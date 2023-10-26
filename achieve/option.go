@@ -1,6 +1,10 @@
 package achieve
 
-import "gorm.io/gorm/logger"
+import (
+	"context"
+	"gorm.io/gorm"
+	"gorm.io/gorm/logger"
+)
 
 type options struct {
 	opentracingPlugin *OpentracingPlugin
@@ -8,6 +12,7 @@ type options struct {
 	autoMigrateDst    []any
 	logger            logger.Interface
 	tablePrefix       string
+	translateError    translateErrorFc
 }
 
 type Option interface {
@@ -66,4 +71,13 @@ func (a tablePrefixOption) apply(opts *options) {
 
 func WithTablePrefix(s string) Option {
 	return tablePrefixOption(s)
+}
+
+type translateErrorFc func(ctx context.Context, db *gorm.DB) error
+
+func (a translateErrorFc) apply(opts *options) {
+	opts.translateError = a
+}
+func WithTranslateError(translateError translateErrorFc) Option {
+	return translateError
 }
