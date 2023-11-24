@@ -53,15 +53,3 @@ type Limit struct {
 	PageNum  uint // 页数
 	Count    bool // true获取总数
 }
-
-// Pagination 页数信息
-type Pagination struct {
-	Total    int64 `json:"total"`
-	PageSize uint  `json:"pageSize"`
-	PageNum  uint  `json:"pageNum"`
-}
-
-type QueryReq struct {
-	PageSize uint `form:"pageSize"` // 每页数量
-	PageNum  uint `form:"pageNum"`  // 页数
-}
