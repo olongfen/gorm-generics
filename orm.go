@@ -1,8 +1,7 @@
-package achieve
+package gormgenerics
 
 import (
 	"context"
-	gorm_generics "github.com/olongfen/gorm-generics"
 	"time"
 
 	"go.opentelemetry.io/otel"
@@ -35,7 +34,7 @@ func (d *DB) TranslateGormError(ctx context.Context, db *gorm.DB) error {
 }
 
 // NewDataBase new database
-func NewDataBase(driver DriverName, dsn string, opts ...Option) (gorm_generics.Database, error) {
+func NewDataBase(driver DriverName, dsn string, opts ...Option) (Database, error) {
 	var (
 		option = options{}
 	)

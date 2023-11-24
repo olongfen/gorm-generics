@@ -1,4 +1,4 @@
-package achieve
+package gormgenerics
 
 import "gorm.io/gorm/clause"
 

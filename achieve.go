@@ -1,21 +1,20 @@
-package achieve
+package gormgenerics
 
 import (
 	"context"
 	"errors"
 
-	"github.com/olongfen/gorm-generics"
 	"gorm.io/gorm"
 	"gorm.io/gorm/clause"
 )
 
 // basicRepo 基础存储库实现
 type basicRepo[T any] struct {
-	database gorm_generics.Database
+	database Database
 }
 
 // NewBasicRepository 新建基础存储库
-func NewBasicRepository[T any](database gorm_generics.Database) gorm_generics.BasicRepo[T] {
+func NewBasicRepository[T any](database Database) BasicRepo[T] {
 	return &basicRepo[T]{database}
 }
 
@@ -26,7 +25,7 @@ func (b *basicRepo[T]) Model() *T {
 }
 
 // Database 返回db
-func (b *basicRepo[T]) Database() gorm_generics.Database {
+func (b *basicRepo[T]) Database() Database {
 	return b.database
 }
 
@@ -64,7 +63,7 @@ func processExpression(db *gorm.DB, conds []clause.Expression) *gorm.DB {
 }
 
 // Find 查询
-func (b *basicRepo[T]) Find(ctx context.Context, limit *gorm_generics.Limit, conds ...clause.Expression) ([]*T, int64, error) {
+func (b *basicRepo[T]) Find(ctx context.Context, limit *Limit, conds ...clause.Expression) ([]*T, int64, error) {
 	db := b.database.DB(ctx).Model(b.Model())
 	db = processExpression(db, conds)
 	var (

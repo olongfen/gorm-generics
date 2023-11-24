@@ -1,4 +1,4 @@
-package gorm_generics
+package gormgenerics
 
 import (
 	"context"
