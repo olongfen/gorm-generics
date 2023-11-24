@@ -64,10 +64,8 @@ func DBConnect(driver DriverName, dsn string, option options) (*gorm.DB, error) 
 	}
 	// true 自动迁移
 	if option.autoMigrate && len(option.autoMigrateDst) > 0 {
-		for _, v := range option.autoMigrateDst {
-			if err = db.AutoMigrate(v); err != nil {
-				return nil, err
-			}
+		if err = db.AutoMigrate(option.autoMigrateDst...); err != nil {
+			return nil, err
 		}
 	}
 	// 使用链路追踪
