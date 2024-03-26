@@ -47,56 +47,17 @@ func (b *basicRepo[T]) Creates(ctx context.Context, ent []*T) error {
 	return nil
 }
 
-// processExpression 处理条件
-func processExpression(db *gorm.DB, conds []clause.Expression) *gorm.DB {
-	for _, v := range conds {
-		val, ok := v.(clause.OrderBy)
-		if ok {
-			for _, order := range val.Columns {
-				db = db.Order(order)
-			}
-			continue
-		}
-		db = db.Where(v)
-	}
-	return db
-}
-
 // Find 查询
-func (b *basicRepo[T]) Find(ctx context.Context, limit *Limit, conds ...clause.Expression) ([]*T, int64, error) {
+func (b *basicRepo[T]) Find(ctx context.Context, conds ...clause.Expression) ([]*T, error) {
 	db := b.database.DB(ctx).Model(b.Model())
-	db = processExpression(db, conds)
-	var (
-		count int64
-	)
-	// 如果需要全部数据
-	if limit.Count {
-		if err := db.Count(&count).Error; err != nil {
-			err = b.database.TranslateGormError(ctx, db)
-			return nil, 0, err
-		}
-	}
 	var (
 		data []*T
 	)
-	if !limit.All {
-		switch {
-		case limit.PageSize > 0 && limit.PageNum > 0:
-			db = db.Offset(int((limit.PageNum - 1) * limit.PageSize)).Limit(int(limit.PageSize))
-		case limit.PageSize > 0 && limit.PageNum == 0:
-			db = db.Limit(int(limit.PageSize))
-		default:
-			limit.PageSize = 10
-			limit.PageNum = 1
-			db = db.Offset(int((limit.PageNum - 1) * limit.PageSize)).Limit(int(limit.PageSize))
-		}
-	}
-
-	if err := db.Find(&data).Error; err != nil {
+	if err := db.Clauses(conds...).Find(&data).Error; err != nil {
 		err = b.database.TranslateGormError(ctx, db)
-		return nil, 0, err
+		return nil, err
 	}
-	return data, count, nil
+	return data, nil
 }
 
 // FindOne 查询一条数据
@@ -118,8 +79,7 @@ func (b *basicRepo[T]) FindOneBy(ctx context.Context, conds []clause.Expression)
 		data *T
 	)
 	db := b.database.DB(ctx).Model(b.Model())
-	db = processExpression(db, conds)
-	if err := db.First(&data).Error; err != nil {
+	if err := db.Clauses(conds...).First(&data).Error; err != nil {
 		err = b.database.TranslateGormError(ctx, db)
 		return nil, err
 	}
@@ -127,11 +87,10 @@ func (b *basicRepo[T]) FindOneBy(ctx context.Context, conds []clause.Expression)
 }
 
 // Count 统计
-func (b *basicRepo[T]) Count(ctx context.Context, conds []clause.Expression) (count int64, err error) {
+func (b *basicRepo[T]) Count(ctx context.Context, conds ...clause.Expression) (count int64, err error) {
 	db := b.database.DB(ctx).Model(b.Model())
-	db = processExpression(db, conds)
 	// 如果需要全部数据
-	if err = db.Count(&count).Error; err != nil {
+	if err = db.Clauses(conds...).Count(&count).Error; err != nil {
 		err = b.database.TranslateGormError(ctx, db)
 		return
 	}
@@ -159,8 +118,7 @@ func (b *basicRepo[T]) DeleteBy(ctx context.Context, conds []clause.Expression) 
 		return errors.New("delete condition is empty")
 	}
 	db := b.database.DB(ctx).Model(b.Model())
-	db = processExpression(db, conds)
-	db = db.Delete(&model)
+	db = db.Clauses(conds...).Delete(&model)
 	if err := db.Error; err != nil {
 		return b.database.TranslateGormError(ctx, db)
 	}
@@ -193,8 +151,7 @@ func (b *basicRepo[T]) UpdateColumnsBy(ctx context.Context, conds []clause.Expre
 		return errors.New("the update condition is empty")
 	}
 	db := b.database.DB(ctx).Model(b.Model())
-	db = processExpression(db, conds)
-	db = db.Updates(data)
+	db = db.Clauses(conds...).Updates(data)
 	if err := db.Error; err != nil {
 		err = b.database.TranslateGormError(ctx, db)
 		return err

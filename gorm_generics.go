@@ -20,7 +20,7 @@ type BasicRepo[T any] interface {
 	// UpdateColumnsBy 通过条件表达式更新数据
 	UpdateColumnsBy(ctx context.Context, expression []clause.Expression, data any) error
 	// Find 查询
-	Find(ctx context.Context, limit *Limit, expression ...clause.Expression) ([]*T, int64, error)
+	Find(ctx context.Context, expression ...clause.Expression) ([]*T, error)
 	// FindOneBy 通过条件表达式查询一条数据
 	FindOneBy(ctx context.Context, expression []clause.Expression) (*T, error)
 	// FindOne 通过id查询一条数据
@@ -30,7 +30,7 @@ type BasicRepo[T any] interface {
 	// DeleteBy 通过条件删除一条或者多条数据
 	DeleteBy(ctx context.Context, expression []clause.Expression) error
 	// Count 进行统计数据
-	Count(ctx context.Context, expression []clause.Expression) (count int64, err error)
+	Count(ctx context.Context, expression ...clause.Expression) (count int64, err error)
 	// ExecTX 开启事务
 	ExecTX(ctx context.Context, fc func(ctx context.Context) error) error
 	// Database 获取db

@@ -2,7 +2,6 @@ package gormgenerics
 
 import (
 	"errors"
-
 	_ "github.com/go-sql-driver/mysql"
 	"gorm.io/driver/mysql"
 	"gorm.io/driver/postgres"
