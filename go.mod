@@ -1,4 +1,4 @@
-module github.com/olongfen/gorm-generics
+module github.com/xjellyx/gorm-generics
 
 go 1.21.1
 
